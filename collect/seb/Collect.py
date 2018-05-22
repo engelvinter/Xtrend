@@ -49,8 +49,7 @@ class Collect:
     def _make_index(self, dataframes, col_name):
         for name in dataframes:
             df = dataframes[name]
-            df.index = df[col_name]
-            del df[col_name]
+            df.set_index(col_name)
 
     def execute(self, start_date, stop_date):
         interval = pd.date_range(start_date, stop_date)
