@@ -1,6 +1,6 @@
-from collect.seb.CollectService import CollectService
+from seb.collect.CollectService import CollectService
 
-from load.seb import LoadService as ls
+from seb.load import LoadService as ls
 
 DB_PATH = r"C:\Temp\db"
 
