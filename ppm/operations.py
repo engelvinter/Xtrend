@@ -23,3 +23,8 @@ def trend(nbr_funds = 3, categories = None):
 
     return funds_per_category
 
+def agg(nbr_picked_funds, categories = None):
+    funds = trend(1, categories)
+    sorted_funds = funds.sort_values("Compound", ascending=False)
+    return sorted_funds.head(nbr_picked_funds)
+
