@@ -1,14 +1,16 @@
 
-from . Factory import Factory
+from . Download import Download
 from io import BytesIO
 from datetime import datetime
 import pandas as pd
 import calendar
 
+_download_link = "https://www.pensionsmyndigheten.se/content/dam/pensionsmyndigheten/blanketter---broschyrer---faktablad/statistik/premiepension/m%C3%A5nadsstatistik/%C3%A4ldre-m%C3%A5nadsstatistik-%C3%B6ver-fondhandel"  # noqa: E501
+
 
 class LoadService:
     def __init__(self):
-        self._factory = Factory()
+        pass
 
     def _last_day_in_month(self, month):
         now = datetime.now()
@@ -18,7 +20,7 @@ class LoadService:
 
     def _load_month(self, month):
         dt = self._last_day_in_month(month)
-        download = self._factory.create_downloader(dt)
+        download = Download(_download_link, dt)
         excel_file = BytesIO(download.execute())
 
         xl = pd.ExcelFile(excel_file)
