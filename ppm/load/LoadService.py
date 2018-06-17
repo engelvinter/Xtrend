@@ -1,6 +1,7 @@
 
 from . Factory import Factory
 from io import BytesIO
+from datetime import datetime
 import pandas as pd
 
 
@@ -8,8 +9,8 @@ class LoadService:
     def __init__(self):
         self._factory = Factory()
 
-    def _load(self, month_lookback):
-        download = self._factory.create_downloader(month_lookback)
+    def _load_month(self, month):
+        download = self._factory.create_downloader(month)
         excel_file = BytesIO(download.execute())
 
         xl = pd.ExcelFile(excel_file)
@@ -25,16 +26,23 @@ class LoadService:
 
         return df
 
-    def execute(self):
+    def _load_available_month(self, month):
         df = None
-        month_lookback = 0
-
         while df is None:
             try:
-                df = self._load(month_lookback)
+                df = self._load_month(month)
             except OSError:
-                month_lookback += 1
-                if month_lookback > 2:
+                month -= 1
+                if month < 1:
                     raise
+
+        return df
+
+    def execute(self, month=None):
+        if not month:
+            month = datetime.now().month
+            df = self._load_available_month(month)
+        else:
+            df = self._load_month(month)
 
         return df

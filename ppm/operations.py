@@ -4,10 +4,10 @@ from .load.LoadService import LoadService
 _df = None
 
 
-def init():
+def load(month=None):
     global _df
     ls = LoadService()
-    _df = ls.execute()
+    _df = ls.execute(month)
     _df["Compound"] = (_df.Twelve_months +
                        _df.Six_months +
                        _df.Three_months +
@@ -19,7 +19,7 @@ def categories():
 
 
 def trend(nbr_funds=3, categories=None):
-    trend = lambda x: x.nlargest(nbr_funds, "Compound")
+    trend = lambda x: x.nlargest(nbr_funds, "Compound")  # noqa: E731
 
     group = _df.groupby("Category")
     funds_per_category = group.apply(trend)[["Name", "Compound"]]
