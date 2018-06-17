@@ -3,14 +3,22 @@ from . Factory import Factory
 from io import BytesIO
 from datetime import datetime
 import pandas as pd
+import calendar
 
 
 class LoadService:
     def __init__(self):
         self._factory = Factory()
 
+    def _last_day_in_month(self, month):
+        now = datetime.now()
+        day = calendar.monthrange(now.year, month)[1]
+        dt = datetime(now.year, month, day)
+        return dt
+
     def _load_month(self, month):
-        download = self._factory.create_downloader(month)
+        dt = self._last_day_in_month(month)
+        download = self._factory.create_downloader(dt)
         excel_file = BytesIO(download.execute())
 
         xl = pd.ExcelFile(excel_file)
@@ -18,11 +26,13 @@ class LoadService:
         df = xl.parse("Fondstatistik",
                       header=None,
                       skiprows=21,
-                      names=['Id', 'Name',  '', 'One_month', 'Three_months',
+                      names=['Id', 'Fund',  '', 'One_month', 'Three_months',
                              'Six_months', 'Twelve_months', 'Three_years',
                              'Five_years', 'Avg_five_years', 'Netto', 'Brutto',
                              'SD36', 'Sharpe', 'Valuta', '', '', '', '',
                              'Category', ''])
+
+        df.name = '{0:%Y-%m-%d}'.format(dt)
 
         return df
 
