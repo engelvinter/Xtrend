@@ -28,9 +28,13 @@ def filter_categories(categories):
 
 
 def filter_name(regexp):
-    global _df
-    matches = _df.Fund.apply(lambda x: match(regexp, x) is not None)
-    _df = _df[matches]
+    matches = _orig_df.Fund.apply(lambda x: match(regexp, x) is not None)
+    _filter_df(matches)
+
+
+def filter_min_sharpe(min_sharpe):
+    matches = _orig_df.Sharpe >= min_sharpe
+    _filter_df(matches)
 
 
 def reset():
@@ -62,3 +66,10 @@ def agg(nbr_funds):
     picked_funds.name = "Aggressive Global Growth {}".format(_df.name)
 
     return picked_funds
+
+
+def _filter_df(filter_series):
+    global _df
+    _df = _orig_df[filter_series]
+    _df.name = _orig_df.name
+    
