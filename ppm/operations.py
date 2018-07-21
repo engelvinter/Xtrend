@@ -1,3 +1,20 @@
+"""
+This module contains different operations using ppm fund data
+Supports loading, filtering, and trend analysis of the data.
+The trend analysis is based on Meb Fabers AGG which uses a compund
+value which is the average of the averages (1, 3, 6 and 12 months).
+
+A typical flow might look like:
+import ppm.operations as op
+op.load()                                       # load the latest ppm fund data
+
+op.filter_name("SEB.*|Handelsb.*|Lannebo.*")    # only use funds form SEB, 
+                                                # Handelsbanken and Lannebo
+
+op.agg(3)                                       # Pick the 3 top fonds 
+                                                # according to the compound 
+                                                # value 
+"""
 from re import match
 from .load.LoadService import LoadService
 
@@ -8,6 +25,16 @@ _categories = None
 
 
 def load(month=None):
+    """
+    This function loads month statistics of the funds from pensionsmyndigheten
+    into a dataframe.
+
+    Parameters
+    ----------
+    `month` : Latest month is default argument (None) othwerwise
+              specify the ordinal number of the month
+    """
+
     global _df, _orig_df
     ls = LoadService()
     _df = ls.execute(month)
@@ -19,31 +46,72 @@ def load(month=None):
 
 
 def categories():
+    """ Returns a list of categories from the funds """
     return _df.Category.unique()
 
 
 def filter_categories(categories):
+    """
+    Specify which categories to use when doing trend analysis
+
+    Parameters
+    ----------
+    `categories` : list of categories to use
+    """
     global _categories
     _categories = categories
 
 
 def filter_name(regexp):
+    """
+    Specify which funds to use when doing trend analysis.
+    A regexp is given as argument that is matched with
+    the name of each fund.
+
+    Parameters
+    ----------
+    `regexp` : A regexp that matches the name of funds
+               e.g. "SEB.*|Swedbank.*" to match all funds
+               of SEB and Swedbank 
+    """
     matches = _orig_df.Fund.apply(lambda x: match(regexp, x) is not None)
     _filter_df(matches)
 
 
 def filter_min_sharpe(min_sharpe):
+    """
+    Specify the minimal sharp limit for the funds when doing trend analysis
+
+    Parameters
+    ----------
+    `min_sharpe` : the minimal sharpe limit e.g. 1.0
+
+    """
     matches = _orig_df.Sharpe >= min_sharpe
     _filter_df(matches)
 
 
 def reset():
+    """ Resets into no filters """
     global _categories, _df
     _categories = None
     _df = _orig_df
 
 
 def trend(nbr_funds=3):
+    """
+    This functions choses the funds with the highest compound value
+    for each category. The compund value is calculated by an average 
+    of four other averages (12, 6, 3 ,1 month(s)).
+
+    Parameters
+    ----------
+    `nbr_funds` : Default is 3, but possible to specify any amount
+
+    Returns
+    -------
+    A panda dataframe containing the trending funds
+    """
     trend = lambda x: x.nlargest(nbr_funds, "Compound")  # noqa: E731
 
     group = _df.groupby("Category")
@@ -60,6 +128,20 @@ def trend(nbr_funds=3):
 
 
 def agg(nbr_funds):
+    """
+    Picks the top trending funds across all categories using the compund
+    value. The compund value is calculated by an average 
+    of four other averages (12, 6, 3 ,1 month(s)).
+
+    Parameters
+    ----------
+    `nbr_funds` : number of funds to pick, must be less than number of 
+                  categories.
+
+    Returns
+    -------
+    A panda dataframe containing the trending funds
+    """
     funds = trend(1)
     sorted_funds = funds.sort_values("Compound", ascending=False)
     picked_funds = sorted_funds.head(nbr_funds)
@@ -69,6 +151,7 @@ def agg(nbr_funds):
 
 
 def _filter_df(filter_series):
+    """"Performs a filtering using the given True/False series."""
     global _df
     _df = _orig_df[filter_series]
     _df.name = _orig_df.name
