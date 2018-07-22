@@ -14,12 +14,12 @@ class Download:
 
     def _create_link(self, pre_url, date, file_version=""):
         url_frm = '{0}/{1}/Statistik%20Premiepension%20{2}{3}.xlsm'
-        complete_url = url_frm.format(pre_url, 
-                                      date.year, 
+        complete_url = url_frm.format(pre_url,
+                                      date.year,
                                       self._get_date_str(date),
                                       file_version)
         return complete_url
-    
+
     def _create_io_error(self, url, response):
         txt = "Failed to download {0}, since status code is {1}"
         msg = txt.format(url, response.status_code)
@@ -31,7 +31,7 @@ class Download:
 
         versions = ["", "v2", "v3", "v4"]
 
-        for version in versions:            
+        for version in versions:
             url = self._create_link(self._url, self._date, "." + version)
             resp = requests.get(url)
             if resp.status_code is self.SUCCESS_CODE:
