@@ -4,6 +4,8 @@ Supports loading, filtering, and trend analysis of the data.
 The trend analysis is based on Meb Fabers AGG which uses a compund
 value which is the average of the averages (1, 3, 6 and 12 months).
 
+The link to the ppm fund data is in LoadService._download_link
+
 A typical flow might look like:
 import ppm.operations as op
 op.load()                                       # load the latest ppm fund data
