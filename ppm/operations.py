@@ -8,12 +8,12 @@ A typical flow might look like:
 import ppm.operations as op
 op.load()                                       # load the latest ppm fund data
 
-op.filter_name("SEB.*|Handelsb.*|Lannebo.*")    # only use funds form SEB, 
+op.filter_name("SEB.*|Handelsb.*|Lannebo.*")    # only use funds form SEB,
                                                 # Handelsbanken and Lannebo
 
-op.agg(3)                                       # Pick the 3 top fonds 
-                                                # according to the compound 
-                                                # value 
+op.agg(3)                                       # Pick the 3 top fonds
+                                                # according to the compound
+                                                # value
 """
 from re import match
 from .load.LoadService import LoadService
@@ -72,7 +72,7 @@ def filter_name(regexp):
     ----------
     `regexp` : A regexp that matches the name of funds
                e.g. "SEB.*|Swedbank.*" to match all funds
-               of SEB and Swedbank 
+               of SEB and Swedbank
     """
     matches = _orig_df.Fund.apply(lambda x: match(regexp, x) is not None)
     _filter_df(matches)
@@ -101,7 +101,7 @@ def reset():
 def trend(nbr_funds=3):
     """
     This functions choses the funds with the highest compound value
-    for each category. The compund value is calculated by an average 
+    for each category. The compund value is calculated by an average
     of four other averages (12, 6, 3 ,1 month(s)).
 
     Parameters
@@ -130,12 +130,12 @@ def trend(nbr_funds=3):
 def agg(nbr_funds):
     """
     Picks the top trending funds across all categories using the compund
-    value. The compund value is calculated by an average 
+    value. The compund value is calculated by an average
     of four other averages (12, 6, 3 ,1 month(s)).
 
     Parameters
     ----------
-    `nbr_funds` : number of funds to pick, must be less than number of 
+    `nbr_funds` : number of funds to pick, must be less than number of
                   categories.
 
     Returns
@@ -155,4 +155,3 @@ def _filter_df(filter_series):
     global _df
     _df = _orig_df[filter_series]
     _df.name = _orig_df.name
-    
