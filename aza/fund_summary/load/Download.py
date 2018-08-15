@@ -1,7 +1,5 @@
 from pandas import read_html, to_numeric
 
-# https://www.avanza.se/fonder/lista.html
-
 
 class Download:
     ARGUMENTS = ("disableSelection=false&"
