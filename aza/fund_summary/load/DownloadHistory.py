@@ -1,15 +1,14 @@
 from pandas import read_html, to_numeric
 
+from .NoDataException import NoDataException
 
-class Download:
+
+class DownloadHistory:
     ARGUMENTS = ("disableSelection=false&"
                  "name=&page={0}&"
                  "sortField=CHANGE_IN_SEK_SINCE_THREE_MONTHS&"
                  "sortOrder=DESCENDING&"
                  "activeTab=history")
-
-    class NoData(Exception):
-        pass
 
     def __init__(self, url, page):
         self._url = url
@@ -24,6 +23,7 @@ class Download:
             # Convert the column to numeric
             df[column_name] = to_numeric(df[column_name])
 
+        # Divide by 100 to get 0.00 - 1.00
         df[column_name] = df[column_name].div(100)
 
         return df
@@ -45,9 +45,12 @@ class Download:
         return df
 
     def execute(self):
+        # Fetch page using url
         request_url = self._url + "?" + self.ARGUMENTS.format(self._page)
         resp_df = read_html(request_url)
-        if len(resp_df) == 1:
-            raise Download.NoData()
+        # Contains data? Shall contain 2 frames
+        if len(resp_df) != 2:
+            raise NoDataException()
+        # Transfrom frame into correct format
         resp_df = self._transform(resp_df[1])
         return resp_df
