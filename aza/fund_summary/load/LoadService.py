@@ -8,6 +8,8 @@ from .NoDataException import NoDataException
 
 from pandas import DataFrame
 
+from datetime import datetime
+
 _download_link = "https://www.avanza.se/fonder/lista.html"
 
 
@@ -64,5 +66,7 @@ class LoadService:
 
         self._copy_columns(df_cat, df_hist)
         self._copy_columns(df_overv, df_hist)
+
+        df_hist.name = datetime.now().strftime("%Y-%m-%d")
 
         return df_hist
