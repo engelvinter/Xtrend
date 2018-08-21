@@ -49,14 +49,20 @@ class LoadService:
         whole_df = remove_duplicates(whole_df)
         return whole_df
 
+    def _copy_columns(self, from_df, to_df):
+        # remove all empty column names
+        names = from_df.columns.drop_duplicates().drop("")
+        # copy the columns
+        for name in names:
+            to_df[name] = from_df[name]
+        return to_df
+
     def execute(self):
         df_hist = self._download_pages(self._download_history)
         df_cat = self._download_pages(self._download_category)
         df_overv = self._download_pages(self._download_overview)
 
-        df_hist["Category"] = df_cat["Category"]
-        df_hist["Sharpe"] = df_overv["Sharpe"]
-        df_hist["Fee"] = df_overv["Fee"]
-        df_hist["Rating"] = df_overv["Rating"]
+        self._copy_columns(df_cat, df_hist)
+        self._copy_columns(df_overv, df_hist)
 
         return df_hist
