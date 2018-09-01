@@ -6,12 +6,14 @@ import os.path
 import os
 import re
 
+
 def fund_names(db_path, regexp = ".*", ext=".csv"):
     files = glob.glob("{}/*{}".format(db_path, ext))
     extract_base = lambda fullpath :  os.path.splitext(os.path.basename(fullpath))[0]
     all_names = [extract_base(fullpath) for fullpath in files]
     names = [name for name in all_names if re.match(regexp, name)]
     return names
+
 
 class LoadService:
     def __init__(self, db_path, min_days, max_missing_days):

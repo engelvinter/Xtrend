@@ -1,15 +1,9 @@
-from datetime import date
-
-import os
 
 from .Download import Download
 from .Extract import Extract
 from .Store import Store
 from .Collect import Collect
 
-import logging
-
-#os.path.join(".", "db")
 
 class Factory:
     def __init__(self, db_path):
@@ -17,7 +11,7 @@ class Factory:
 
     def create_downloader(self, date):
         return Download("https://seb.se/pow/fmk/2100", date)
-    
+
     def create_extractor(self, content, fund_callback):
         return Extract(content, fund_callback)
 
@@ -26,5 +20,3 @@ class Factory:
 
     def create_collector(self, funds):
         return Collect(funds, self)
-        
-
