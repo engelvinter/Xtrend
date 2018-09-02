@@ -9,6 +9,8 @@ from datetime import datetime
 
 from re import match
 
+from common.assign_date import assign_date
+
 DB_PATH = r"C:\Temp\db"
 
 _funds = None
@@ -19,11 +21,19 @@ _date = datetime.now()
 
 
 def collect():
+    """
+    Collects data from SEB of funds and stores into file db.
+    The path of the file db is within this module (DB_PATH)
+    """
     cs = CollectService(DB_PATH, "2016-01-01")
     cs.execute()
 
 
 def load():
+    """
+    This function loads the quotes from file db of funds and then calcualtes
+    statistics of each fund into a dataframe.
+    """
     global _funds, _orig_df, _df, _date
     names = fund_names(DB_PATH)
     service = LoadService(DB_PATH, 10, 10)
@@ -33,14 +43,25 @@ def load():
 
 
 def set_date(date):
-    global _date
-    _date = date
+    """
+    Sets a new date. This new date will be used as
+    the last date in trend calculations.
+
+    Parameters
+    ----------
+    `date` : the actual date
+    """
+    global _date, _df
+    _date = assign_date(date)
+    ms = MakeStats(_date)
+    _df = ms.execute(_funds)
 
 
 def reset():
     """ Resets into no filters """
-    global _df
+    global _df, _date
     _df = _orig_df
+    _date = datetime.now()
 
 
 def filter_name(regexp):
@@ -60,6 +81,27 @@ def filter_name(regexp):
         
     matches = _orig_df.apply(axis=1, func=lambda x: fund_match(x.name))
     _filter_df(matches)
+
+
+def agg(nbr_funds):
+    """
+    Picks the top trending funds using the compound
+    value. The compound value is calculated by an average
+    of four other averages (12, 6, 3 ,1 month(s)).
+
+    Parameters
+    ----------
+    `nbr_funds` : number of funds to pick, must be less than number of
+                  categories.
+
+    Returns
+    -------
+    A panda series containing the trending funds
+    """
+    sorted_funds = _df.sort_values("Compound", ascending=False)["Compound"]
+    picked_funds = sorted_funds.head(nbr_funds)
+    picked_funds.name = "Aggressive Global Growth {}".format(_df.name)
+    return picked_funds
 
 
 def _filter_df(filter_series):

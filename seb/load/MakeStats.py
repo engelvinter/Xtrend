@@ -6,9 +6,6 @@ from common.bdays import (BDAYS_ONE_MONTH,
                           BDAYS_TWELVE_MONTHS)
 
 
-from datetime import datetime
-
-
 class MakeStats:
     def __init__(self, date):
         self._date = date
@@ -39,9 +36,9 @@ class MakeStats:
         df = self._create_empty_frame()
         for fund, quotes in funds.items():
             try:
-                row = self._create_row(fund, quotes)
+                data = quotes.loc[:self._date]
+                row = self._create_row(fund, data)
                 df.loc[fund] = row
-                #print("** ", fund, " ", row)
             except IndexError as e:
                 print(fund, " has too short timeseries")
         df.name = self._date.strftime("%Y-%m-%d")
