@@ -42,6 +42,34 @@ def load():
     _orig_df = _df = ms.execute(_funds)
 
 
+def avail_funds_during_year(year, regexp=".*"):
+    """
+    Returns funds that ara available during given year
+    Available is defined as it has been possible to buy
+    the fund throughout the whole year.
+
+    Parameters
+    ----------
+    `year` : the given year
+    `regexp` : optional, filter using the given regexp
+
+    Returns
+    -------
+    a list of fund names
+    """
+    avail_funds = []
+    start_year = datetime(year, 1, 1)
+    end_year = datetime(year, 12, 31)
+    for fund, data in _funds.items():
+        if match(regexp, fund) is None:
+            continue
+        start_fund = data.index[0]
+        end_fund = data.index[-1]
+        if start_fund < start_year and end_fund > end_year:
+            avail_funds.append(fund)
+    return avail_funds
+
+
 def set_date(date):
     """
     Sets a new date. This new date will be used as
