@@ -71,7 +71,10 @@ def filter_name(regexp):
                e.g. "SEB.*|Swedbank.*" to match all funds
                of SEB and Swedbank
     """
-    matches = _orig_df.Fund.apply(lambda x: match(regexp, x) is not None)
+    def fund_match(x):
+        return match(regexp, x) is not None
+
+    matches = _orig_df.apply(axis=1, func=lambda x: fund_match(x.name))
     _filter_df(matches)
 
 
