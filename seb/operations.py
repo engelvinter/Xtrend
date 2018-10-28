@@ -11,6 +11,8 @@ from re import match
 
 from common.assign_date import assign_date
 
+from common.Graph import Graph
+
 DB_PATH = r"C:\Temp\db"
 
 _funds = None
@@ -25,7 +27,7 @@ def collect():
     Collects data from SEB of funds and stores into file db.
     The path of the file db is within this module (DB_PATH)
     """
-    cs = CollectService(DB_PATH, "2016-01-01")
+    cs = CollectService(DB_PATH, "1994-01-01")
     cs.execute()
 
 
@@ -130,6 +132,13 @@ def agg(nbr_funds):
     picked_funds = sorted_funds.head(nbr_funds)
     picked_funds.name = "Aggressive Global Growth {}".format(_df.name)
     return picked_funds
+
+
+def graph(fund_name):
+    """Shows a graph showing the return of the given fund in percent."""
+    s = _funds[fund_name]['quote']
+    graph = Graph(fund_name, s)
+    graph.show()    
 
 
 def _filter_df(filter_series):
