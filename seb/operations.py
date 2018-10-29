@@ -13,13 +13,15 @@ from common.assign_date import assign_date
 
 from common.Graph import Graph
 
+from common.functions import above_ma as above_ma_ts
+
 DB_PATH = r"C:\Temp\db"
 
 _funds = None
 _orig_df = None
 _df = None
 
-_date = datetime.now()
+_date = datetime.now().date()
 
 
 def collect():
@@ -96,7 +98,8 @@ def reset():
 
 def filter_name(regexp):
     """
-    Specify which funds to use when doing trend analysis.
+    Specify which funds to use when doing trend analysis
+    based on the fund name.
     A regexp is given as argument that is matched with
     the name of each fund.
 
@@ -111,6 +114,24 @@ def filter_name(regexp):
         
     matches = _orig_df.apply(axis=1, func=lambda x: fund_match(x.name))
     _filter_df(matches)
+
+
+def filter_above_ma(nbr_days):
+    """
+    Specifies to only use the funds that are above
+    their moving average of nbr_days
+
+    Parameters
+    ----------
+    `nbr_days` : number days to use in moving average
+
+    """
+    def calc(name):
+        ts = _funds[name].quote[:_date]
+        return above_ma_ts(nbr_days, ts)
+
+    result = _df.index.map(calc).tolist()
+    _filter_df(result)
 
 
 def agg(nbr_funds):
@@ -135,7 +156,13 @@ def agg(nbr_funds):
 
 
 def graph(fund_name):
-    """Shows a graph showing the return of the given fund in percent."""
+    """
+    Shows a graph showing the return of the given fund in percent.
+    
+    Parameters
+    ----------
+    `fund_name` : the name of the fund
+    """
     s = _funds[fund_name]['quote']
     graph = Graph(fund_name, s)
     graph.show()    
