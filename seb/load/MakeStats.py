@@ -32,13 +32,21 @@ class MakeStats:
         row.append((row[0] + row[1] + row[2] + row[3]) / 4)
         return row
 
+    def _is_fund_still_open(self, last_open_date):
+        diff = self._date - last_open_date
+        return diff.days < 10
+        
     def execute(self, funds):
         df = self._create_empty_frame()
-        for fund, quotes in funds.items():
+        for fund, data in funds.items():
             try:
-                data = quotes.loc[:self._date]
-                row = self._create_row(fund, data)
-                df.loc[fund] = row
+                sliced_data = data.loc[:self._date]
+                last_open_date = sliced_data.index[-1].date()
+                
+                if self._is_fund_still_open(last_open_date):
+                    row = self._create_row(fund, sliced_data)
+                    df.loc[fund] = row
+
             except IndexError as e:
                 print(fund, " has too short timeseries")
         df.name = self._date.strftime("%Y-%m-%d")
