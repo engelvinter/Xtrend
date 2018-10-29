@@ -77,6 +77,17 @@ def filter_name(regexp):
     matches = _orig_df.apply(axis=1, func=lambda x: fund_match(x.name))
     _filter_df(matches)
 
+def filter_max_fee(max_fee):
+    """
+    Specify the max fee for the funds when doing trend analysis
+
+    Parameters
+    ----------
+    `max_fee` : the max fee in percent for a fund e.g 1.2
+
+    """
+    matches = _orig_df.apply(axis=1, func=lambda x: x.Fee < max_fee)
+    _filter_df(matches)
 
 def filter_min_sharpe(min_sharpe):
     """
