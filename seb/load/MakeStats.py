@@ -7,8 +7,9 @@ from common.bdays import (BDAYS_ONE_MONTH,
 
 
 class MakeStats:
-    def __init__(self, date):
+    def __init__(self, date, min_days_diff):
         self._date = date
+        self._min_days_diff = min_days_diff
 
     def _create_empty_frame(self):
         c = ["Fund", "Twelve_months", "Six_months", 
@@ -34,7 +35,7 @@ class MakeStats:
 
     def _is_fund_still_open(self, last_open_date):
         diff = self._date - last_open_date
-        return diff.days < 10
+        return diff.days < self._min_days_diff
         
     def execute(self, funds):
         df = self._create_empty_frame()

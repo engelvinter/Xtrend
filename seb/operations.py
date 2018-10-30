@@ -15,7 +15,13 @@ from common.Graph import Graph
 
 from common.functions import above_ma as above_ma_ts
 
+from configparser import ConfigParser
+
+import pandas as pd
+
 DB_PATH = r"C:\Temp\db"
+
+GROUP_PATH = r"C:\Temp\Groups.ini"
 
 _funds = None
 _orig_df = None
@@ -42,8 +48,34 @@ def load():
     names = fund_names(DB_PATH)
     service = LoadService(DB_PATH, 10, 10)
     _funds = service.execute(names)
-    ms = MakeStats(_date)
-    _orig_df = _df = ms.execute(_funds)
+    ms = MakeStats(_date, 10)
+    _df = ms.execute(_funds)
+    _df["Group"] = None
+    _orig_df = _df
+
+
+def read_groups(full_path=GROUP_PATH):
+    config = ConfigParser(allow_no_value=True)
+    config.optionxform = str
+    config.read(full_path)
+    fund_config = {}
+    for section in config.sections():
+        d = {item[0]: section for item in config.items(section)}
+        fund_config.update(d)
+    return fund_config
+
+
+def set_groups(fund_to_group):
+    """
+    Connects funds with a group
+
+    Parameters
+    ----------
+    `fund_to_group` : dictionary populated by fund name => group name 
+    """
+    global _df
+    s = pd.Series(fund_to_group)
+    _df["Group"] = s
 
 
 def avail_funds_during_year(year, regexp=".*"):
