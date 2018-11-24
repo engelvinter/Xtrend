@@ -47,35 +47,20 @@ def load():
     global _funds, _orig_df, _df, _date
     names = fund_names(DB_PATH)
     service = LoadService(DB_PATH, 10, 10)
-    _funds = service.execute(names)
-    ms = MakeStats(_date, 10)
-    _df = ms.execute(_funds)
+    result = service.execute(names)
+    _funds = result.funds
+    ms = MakeStats(result.last_updated, 10)
+    _df = ms.execute(result.funds)
     _df["Group"] = None
     _orig_df = _df
 
 
-def read_groups(full_path=GROUP_PATH):
-    config = ConfigParser(allow_no_value=True)
-    config.optionxform = str
-    config.read(full_path)
-    fund_config = {}
-    for section in config.sections():
-        d = {item[0]: section for item in config.items(section)}
-        fund_config.update(d)
-    return fund_config
-
-
-def set_groups(fund_to_group):
+def apply_groups(full_path=GROUP_PATH):
     """
-    Connects funds with a group
-
-    Parameters
-    ----------
-    `fund_to_group` : dictionary populated by fund name => group name 
+    Applies a group ini file to the statistics. 
     """
-    global _df
-    s = pd.Series(fund_to_group)
-    _df["Group"] = s
+    fund_to_group = _read_groups(full_path=GROUP_PATH)
+    _set_groups(fund_to_group)
 
 
 def avail_funds_during_year(year, regexp=".*"):
@@ -117,7 +102,7 @@ def set_date(date):
     """
     global _date, _df
     _date = assign_date(date)
-    ms = MakeStats(_date)
+    ms = MakeStats(_date, 10)
     _df = ms.execute(_funds)
 
 
@@ -200,8 +185,56 @@ def graph(fund_name):
     graph.show()    
 
 
+"""
+Private functions of module
+"""
+
+
 def _filter_df(filter_series):
     """"Performs a filtering using the given True/False series."""
     global _df
     _df = _orig_df[filter_series]
     _df.name = _orig_df.name
+
+
+def _read_groups(full_path=GROUP_PATH):
+    """
+    Reads groups from an ini-file.
+    Each section is the group name together with a list of funds belonging to
+    the group.
+
+    For Example:
+    [Gold]
+    Blackrock Gold Fund
+    Xenia Fund
+    Gold ETF A
+
+    Parameters
+    ----------
+    `full_path` : the input full path name
+
+    Returns
+    -------
+    fund names as keys and group names as values
+    """
+    config = ConfigParser(allow_no_value=True)
+    config.optionxform = str
+    config.read(full_path)
+    fund_config = {}
+    for section in config.sections():
+        d = {item[0]: section for item in config.items(section)}
+        fund_config.update(d)
+    return fund_config
+
+
+def _set_groups(fund_to_group):
+    """
+    Connects funds with different groups
+
+    Parameters
+    ----------
+    `fund_to_group` : dictionary populated by fund name => group name 
+    """
+    global _df
+    s = pd.Series(fund_to_group)
+    _df["Group"] = s
