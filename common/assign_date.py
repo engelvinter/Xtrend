@@ -7,6 +7,6 @@ def str_format(date):
 
 def assign_date(date):
     try:
-        return date_parser.parse(date)
+        return date_parser.parse(date).date()
     except TypeError:
         return date
