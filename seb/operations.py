@@ -39,13 +39,13 @@ def collect():
     cs.execute()
 
 
-def load():
+def load(nbr_funds=10000):
     """
     This function loads the quotes from file db of funds and then calcualtes
     statistics of each fund into a dataframe.
     """
     global _funds, _orig_df, _df, _date
-    names = fund_names(DB_PATH)
+    names = fund_names(DB_PATH)[:nbr_funds]
     service = LoadService(DB_PATH, 10, 10)
     result = service.execute(names)
     _funds = result.funds
@@ -110,7 +110,7 @@ def reset():
     """ Resets into no filters """
     global _df, _date
     _df = _orig_df
-    _date = datetime.now()
+    _date = datetime.now().date()
 
 
 def filter_name(regexp):
@@ -183,6 +183,25 @@ def graph(fund_name):
     s = _funds[fund_name]['quote']
     graph = Graph(fund_name, s)
     graph.show()    
+
+
+def value(fund_name):
+    """
+
+    Parameters
+    ----------
+    `fund_name` : the name of the fund
+
+    Returns
+    -------
+    The quote of the fund at the given date
+    Use set_date to set the date
+    """
+    ts = _funds[fund_name]
+    if _date not in ts.index:
+        msg = "The date '{0}' does not exist in the timeseries".format(_date)
+        raise Exception(msg)
+    return ts.loc[_date].quote
 
 
 """
