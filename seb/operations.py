@@ -51,7 +51,6 @@ def load(nbr_funds=10000):
     _funds = result.funds
     ms = MakeStats(result.last_updated, 10)
     _df = ms.execute(result.funds)
-    _df["Group"] = None
     _orig_df = _df
 
 
@@ -59,8 +58,10 @@ def apply_groups(full_path=GROUP_PATH):
     """
     Applies a group ini file to the statistics. 
     """
+    global _all_funds
     fund_to_group = _read_groups(full_path=GROUP_PATH)
     _set_groups(fund_to_group)
+    _all_funds = _best_fund_per_group
 
 
 def avail_funds_during_year(year, regexp=".*"):
@@ -166,7 +167,8 @@ def agg(nbr_funds):
     -------
     A panda series containing the trending funds
     """
-    sorted_funds = _df.sort_values("Compound", ascending=False)["Compound"]
+    df_funds = _all_funds()
+    sorted_funds = df_funds.sort_values("Compound", ascending=False)["Compound"]
     picked_funds = sorted_funds.head(nbr_funds)
     picked_funds.name = "Aggressive Global Growth {}".format(_df.name)
     return picked_funds
@@ -257,3 +259,33 @@ def _set_groups(fund_to_group):
     global _df
     s = pd.Series(fund_to_group)
     _df["Group"] = s
+
+
+def _all_funds():
+    """
+    Returns
+        Returns all available funds
+        In case of defined groups the best fund of each group is returned
+    """
+    return _df
+
+
+def _best_fund_per_group():
+    """
+    This functions choses the funds with the highest compound value
+    for each group. The compund value is calculated by an average
+    of four other averages (12, 6, 3 ,1 month(s)).
+
+    Returns
+    -------
+    A panda dataframe containing the best fund of each group
+    """
+    trend = lambda x: x.nlargest(1, "Compound")  # noqa: E731
+
+    group = _df.groupby("Group")
+    
+    funds = group.apply(trend)[["Compound"]]
+
+    funds.name = "Best groups {}".format(_df.name)
+
+    return funds
