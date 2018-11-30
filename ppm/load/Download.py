@@ -18,6 +18,7 @@ class Download:
                                       date.year,
                                       self._get_date_str(date),
                                       file_version)
+        #print(complete_url)
         return complete_url
 
     def _create_io_error(self, url, response):
@@ -29,10 +30,10 @@ class Download:
         date_str = self._get_date_str(self._date)
         print("Trying to dowload ", date_str)
 
-        versions = ["", "v2", "v3", "v4"]
+        versions = ["", ".v2", ".v3", ".v4"]
 
         for version in versions:
-            url = self._create_link(self._url, self._date, "." + version)
+            url = self._create_link(self._url, self._date, version)
             resp = requests.get(url)
             if resp.status_code is self.SUCCESS_CODE:
                 break
