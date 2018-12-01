@@ -14,9 +14,8 @@ from common.assign_date import assign_date
 from common.Graph import Graph
 
 from common.functions import above_ma as above_ma_ts
-
-from configparser import ConfigParser
-
+from common.functions import read_fund_groups
+ 
 import pandas as pd
 
 DB_PATH = r"C:\Temp\db"
@@ -59,7 +58,7 @@ def apply_groups(full_path=GROUP_PATH):
     Applies a group ini file to the statistics. 
     """
     global _all_funds
-    fund_to_group = _read_groups(full_path=GROUP_PATH)
+    fund_to_group = read_fund_groups(full_path)
     _set_groups(fund_to_group)
     _all_funds = _best_fund_per_group
 
@@ -216,36 +215,6 @@ def _filter_df(filter_series):
     global _df
     _df = _orig_df[filter_series]
     _df.name = _orig_df.name
-
-
-def _read_groups(full_path=GROUP_PATH):
-    """
-    Reads groups from an ini-file.
-    Each section is the group name together with a list of funds belonging to
-    the group.
-
-    For Example:
-    [Gold]
-    Blackrock Gold Fund
-    Xenia Fund
-    Gold ETF A
-
-    Parameters
-    ----------
-    `full_path` : the input full path name
-
-    Returns
-    -------
-    fund names as keys and group names as values
-    """
-    config = ConfigParser(allow_no_value=True)
-    config.optionxform = str
-    config.read(full_path)
-    fund_config = {}
-    for section in config.sections():
-        d = {item[0]: section for item in config.items(section)}
-        fund_config.update(d)
-    return fund_config
 
 
 def _set_groups(fund_to_group):
