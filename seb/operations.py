@@ -15,7 +15,7 @@ from common.Graph import Graph
 
 from common.functions import above_ma as above_ma_ts
 from common.functions import read_fund_groups
- 
+
 import pandas as pd
 
 DB_PATH = r"C:\Temp\db"
@@ -45,11 +45,14 @@ def load(nbr_funds=10000):
     """
     global _funds, _orig_df, _df, _date
     names = fund_names(DB_PATH)[:nbr_funds]
+
     service = LoadService(DB_PATH, 10, 10)
     result = service.execute(names)
     _funds = result.funds
+
     ms = MakeStats(result.last_updated, 10)
     _df = ms.execute(result.funds)
+
     _orig_df = _df
 
 
@@ -57,10 +60,10 @@ def apply_groups(full_path=GROUP_PATH):
     """
     Applies a group ini file to the statistics. 
     """
-    global _all_funds
+    global _get_funds
     fund_to_group = read_fund_groups(full_path)
     _set_groups(fund_to_group)
-    _all_funds = _best_fund_per_group
+    _get_funds = lambda: trend("Group", 1)  # noqa: E731
 
 
 def avail_funds_during_year(year, regexp=".*"):
@@ -108,9 +111,10 @@ def set_date(date):
 
 def reset():
     """ Resets into no filters """
-    global _df, _date
+    global _df, _date, _get_funds
     _df = _orig_df
     _date = datetime.now().date()
+    _get_funds = _all_funds
 
 
 def filter_name(regexp):
@@ -151,6 +155,27 @@ def filter_above_ma(nbr_days):
     _filter_df(result)
 
 
+def trend(column_name, nbr_funds=3):
+    """
+    This functions choses the funds with the highest compound value
+    for each group. The compund value is calculated by an average
+    of four other averages (12, 6, 3 ,1 month(s)).
+
+    Returns
+    -------
+    A panda dataframe containing the best fund of each group
+    """
+    trend = lambda x: x.nlargest(nbr_funds, "Compound")  # noqa: E731
+
+    group = _df.groupby(column_name)
+    
+    funds = group.apply(trend)[["Compound"]]
+
+    funds.name = "Best groups {}".format(_df.name)
+
+    return funds
+
+
 def agg(nbr_funds):
     """
     Picks the top trending funds using the compound
@@ -166,7 +191,7 @@ def agg(nbr_funds):
     -------
     A panda series containing the trending funds
     """
-    df_funds = _all_funds()
+    df_funds = _get_funds()
     sorted_funds = df_funds.sort_values("Compound", ascending=False)["Compound"]
     picked_funds = sorted_funds.head(nbr_funds)
     picked_funds.name = "Aggressive Global Growth {}".format(_df.name)
@@ -234,27 +259,10 @@ def _all_funds():
     """
     Returns
         Returns all available funds
-        In case of defined groups the best fund of each group is returned
+        In case of
+            using groups the best fund of each group is returned
     """
     return _df
 
 
-def _best_fund_per_group():
-    """
-    This functions choses the funds with the highest compound value
-    for each group. The compund value is calculated by an average
-    of four other averages (12, 6, 3 ,1 month(s)).
-
-    Returns
-    -------
-    A panda dataframe containing the best fund of each group
-    """
-    trend = lambda x: x.nlargest(1, "Compound")  # noqa: E731
-
-    group = _df.groupby("Group")
-    
-    funds = group.apply(trend)[["Compound"]]
-
-    funds.name = "Best groups {}".format(_df.name)
-
-    return funds
+_get_funds = _all_funds

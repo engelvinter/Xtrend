@@ -10,6 +10,10 @@ A typical flow might look like:
 import aza.operations as op
 op.load()                                       # load the latest ppm fund data
 
+op.apply_groups()                               # reads the group.ini file and 
+                                                # applies group names to
+                                                # the fund dataset.
+
 op.filter_name("SEB.*|Handelsb.*|Lannebo.*")    # only use funds form SEB,
                                                 # Handelsbanken and Lannebo
 
@@ -20,10 +24,16 @@ op.agg(3)                                       # Pick the 3 top fonds
 from re import match
 from .fund_summary.load.LoadService import LoadService
 
+from common.functions import read_fund_groups
+
+import pandas as pd
+
 _orig_df = None
 _df = None
 
 _categories = None
+
+GROUP_PATH = r"C:\Temp\Groups.ini"
 
 
 def load():
@@ -40,6 +50,20 @@ def load():
                        _df.Three_months +
                        _df.One_month) / 4
     _orig_df = _df
+
+
+def apply_categories():
+    """Use catogies defined by Avanza"""
+    global _get_funds
+    _get_funds = lambda: trend("Category", 1)  # noqa: E731
+
+
+def apply_groups(full_path=GROUP_PATH):
+    """Use own defined groups of funds"""
+    global _get_funds
+    fund_to_group = read_fund_groups(full_path)
+    _set_groups(fund_to_group)
+    _get_funds = lambda: trend("Group", 1)  # noqa: E731
 
 
 def categories():
@@ -77,6 +101,7 @@ def filter_name(regexp):
     matches = _orig_df.apply(axis=1, func=lambda x: fund_match(x.name))
     _filter_df(matches)
 
+
 def filter_max_fee(max_fee):
     """
     Specify the max fee for the funds when doing trend analysis
@@ -88,6 +113,7 @@ def filter_max_fee(max_fee):
     """
     matches = _orig_df.apply(axis=1, func=lambda x: x.Fee < max_fee)
     _filter_df(matches)
+
 
 def filter_min_sharpe(min_sharpe):
     """
@@ -104,20 +130,23 @@ def filter_min_sharpe(min_sharpe):
 
 def reset():
     """ Resets into no filters """
-    global _categories, _df
+    global _categories, _get_funds, _df
     _categories = None
+    _get_funds = _all_funds
     _df = _orig_df
 
 
-def trend(nbr_funds=3):
+def trend(column_name, nbr_funds=3):
     """
     This functions choses the funds with the highest compound value
-    for each category. The compund value is calculated by an average
-    of four other averages (12, 6, 3 ,1 month(s)).
+    for each unique column value. The compund value is calculated by 
+    an average of four other averages (12, 6, 3 ,1 month(s)).
 
     Parameters
     ----------
-    `nbr_funds` : Default is 3, but possible to specify any amount
+    `column_name` : The name of the column which creates groups of funds
+                    for each unique column value
+    `nbr_funds`   : Default is 3, but possible to specify any amount
 
     Returns
     -------
@@ -125,16 +154,17 @@ def trend(nbr_funds=3):
     """
     trend = lambda x: x.nlargest(nbr_funds, "Compound")  # noqa: E731
 
-    group = _df.groupby("Category")
-    funds_per_category = group.apply(trend)[["Compound", "Sharpe", "Fee"]]
+    groups = _df.groupby(column_name)
+    
+    funds_per_unique_value = groups.apply(trend)[["Compound"]]
 
     if _categories:
         filter = " or ".join(["Category=='{}'".format(c) for c in _categories])
-        funds_per_category = funds_per_category.query(filter)
+        funds_per_unique_value = funds_per_unique_value.query(filter)
 
-    funds_per_category.name = "Trend {}".format(_df.name)
+    funds_per_unique_value.name = "Trend {}".format(_df.name)
 
-    return funds_per_category
+    return funds_per_unique_value
 
 
 def agg(nbr_funds):
@@ -152,9 +182,9 @@ def agg(nbr_funds):
     -------
     A panda dataframe containing the trending funds
     """
-    funds = trend(1)
+    funds = _get_funds()
     sorted_funds = funds.sort_values("Compound", ascending=False)
-    picked_funds = sorted_funds.head(nbr_funds)
+    picked_funds = sorted_funds.head(nbr_funds)["Compound"]
     picked_funds.name = "Aggressive Global Growth {}".format(_df.name)
 
     return picked_funds
@@ -165,3 +195,35 @@ def _filter_df(filter_series):
     global _df
     _df = _orig_df[filter_series]
     _df.name = _orig_df.name
+
+
+"""
+Private functions of module
+"""
+
+
+def _all_funds():
+    """
+    Returns
+        Returns all available funds
+        In case of
+            using groups the best fund of each group is returned
+            using categories the best fund of each category is returned
+    """
+    return _df
+
+
+def _set_groups(fund_to_group):
+    """
+    Connects funds with different groups
+
+    Parameters
+    ----------
+    `fund_to_group` : dictionary populated by fund name => group name 
+    """
+    global _df
+    s = pd.Series(fund_to_group)
+    _df["Group"] = s
+
+
+_get_funds = _all_funds
