@@ -1,3 +1,5 @@
+import common.bdays as bdays
+
 from empyrical import cum_returns
 
 import matplotlib.pyplot as plt
@@ -28,8 +30,8 @@ class Graph:
     def _make_stats(self):
         pct = self._ts.pct_change()
         cum_ret = cum_returns(pct) * 100
-        ma200 = cum_ret.rolling(200).mean()
-        ma50 = cum_ret.rolling(50).mean()
+        ma200 = cum_ret.rolling(bdays.MA200_DAYS).mean()
+        ma50 = cum_ret.rolling(bdays.MA50_DAYS).mean()
         return (cum_ret, ma50, ma200)
 
     def _draw(self, cum_ret, ma50, ma200):
