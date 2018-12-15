@@ -40,7 +40,7 @@ def collect():
 
 def load(nbr_funds=10000):
     """
-    This function loads the quotes from file db of funds and then calcualtes
+    This function loads the navs (net asset values) from file db of funds and then calcualtes
     statistics of each fund into a dataframe.
     """
     global _funds, _orig_df, _df, _date
@@ -148,7 +148,7 @@ def filter_above_ma(nbr_days):
 
     """
     def calc(name):
-        ts = _funds[name].quote[:_date]
+        ts = _funds[name].nav[:_date]
         return above_ma_ts(nbr_days, ts)
 
     result = _df.index.map(calc).tolist()
@@ -206,7 +206,7 @@ def graph(fund_name):
     ----------
     `fund_name` : the name of the fund
     """
-    s = _funds[fund_name]['quote']
+    s = _funds[fund_name]['nav']
     graph = Graph(fund_name, s)
     graph.show()    
 
@@ -220,14 +220,14 @@ def value(fund_name):
 
     Returns
     -------
-    The quote of the fund at the given date
+    The nav (net asset vaue) of the fund at the given date
     Use set_date to set the date
     """
     ts = _funds[fund_name]
     if _date not in ts.index:
         msg = "The date '{0}' does not exist in the timeseries".format(_date)
         raise Exception(msg)
-    return ts.loc[_date].quote
+    return ts.loc[_date].nav
 
 
 """

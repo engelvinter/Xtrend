@@ -26,18 +26,18 @@ class Collect:
         string = " ".join(words)
         return string
 
-    def _fund_callback(self, date, name, quote, row_id):
+    def _fund_callback(self, date, name, nav, row_id):
         name = self._remove_garbage(name)
 
         if not self._is_selected(name):
             return
         
         if name not in self._funds:
-            self._funds[name] = pd.DataFrame(columns=['date','quote', 'id'])
+            self._funds[name] = pd.DataFrame(columns=['date','nav', 'id'])
         
         df = self._funds[name]
         row_index = df.shape[0]
-        df.loc[row_index] = (date, quote, row_id)
+        df.loc[row_index] = (date, nav, row_id)
 
     def _collect_funds(self, actual_date):
         downloader = self._factory.create_downloader(actual_date)

@@ -18,18 +18,18 @@ class MakeStats:
         df = df.set_index("Fund")
         return df
 
-    def _return(self, quotes, nbr_bdays):
-        last_quote = quotes.quote[-1]
-        start_quote = quotes.quote[-nbr_bdays]
-        ret = (last_quote - start_quote) / start_quote
+    def _return(self, navs, nbr_bdays):
+        last_nav = navs.nav[-1]
+        start_nav = navs.nav[-nbr_bdays]
+        ret = (last_nav - start_nav) / start_nav
         return ret
 
-    def _create_row(self, fund, quotes):
+    def _create_row(self, fund, navs):
         row = []
-        row.append(self._return(quotes, BDAYS_TWELVE_MONTHS))
-        row.append(self._return(quotes, BDAYS_SIX_MONTHS))
-        row.append(self._return(quotes, BDAYS_THREE_MONTHS))
-        row.append(self._return(quotes, BDAYS_ONE_MONTH))
+        row.append(self._return(navs, BDAYS_TWELVE_MONTHS))
+        row.append(self._return(navs, BDAYS_SIX_MONTHS))
+        row.append(self._return(navs, BDAYS_THREE_MONTHS))
+        row.append(self._return(navs, BDAYS_ONE_MONTH))
         row.append((row[0] + row[1] + row[2] + row[3]) / 4)
         return row
 

@@ -1,6 +1,7 @@
 import locale
 from datetime import datetime
 
+
 class Extract:
     def __init__(self, content, fund_callback):
         #locale.setlocale(locale.LC_ALL, 'sv_SE.UTF-8')
@@ -14,7 +15,6 @@ class Extract:
         except:
             return datetime.strptime(date_str, "%y-%m-%d")
         
-
     def execute(self):                
         lines = self._content.splitlines()
         for line in lines:
@@ -23,8 +23,8 @@ class Extract:
                 try:
                     date = self._parse_date(items[0])
                     name = items[1].replace('\\', ' ').replace('/', ' ')
-                    quote = locale.atof(items[2])
+                    nav = locale.atof(items[2])
                     row_id = items[3] 
-                    self._fund_callback(date, name, quote, row_id)
+                    self._fund_callback(date, name, nav, row_id)
                 except:
                     print(line)                    

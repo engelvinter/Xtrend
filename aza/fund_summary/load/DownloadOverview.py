@@ -18,7 +18,7 @@ class DownloadOverview:
 
     def _transform(self, df):
         # Rename columns - aligned with columns in ppm
-        df.columns = ["", "Fund", "Quote",
+        df.columns = ["", "Fund", "Nav",
                       "", "Sharpe", "Fee", "ProdFee", "Rating", "", ""]
         # Name of fund is index
         df.set_index("Fund", inplace=True)

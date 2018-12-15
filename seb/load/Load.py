@@ -16,7 +16,10 @@ class Load:
 
         # Workaround for bug #15086
         filehandle = open(filepath, "r")
-        df = pd.read_csv(filehandle, usecols=[1, 2, 3])
+        df = pd.read_csv(filehandle, 
+                         names=["date", "nav", "id"], 
+                         usecols=[1, 2, 3],
+                         skiprows=1)
 
         return df
 
@@ -43,7 +46,7 @@ class Load:
         pass
 
     def _check_na_days(self, df):
-        row_status = df.isnull().quote
+        row_status = df.isnull().nav
         only_nulls = row_status[row_status == True].index
         if len(only_nulls) == 0:
             return
@@ -71,7 +74,7 @@ class Load:
         return df
 
     def _remove_zero_values(self, df):
-        df = df[df.quote != 0]
+        df = df[df.nav != 0]
         return df
 
     def _add_fund(self, funds, df, fund_name):
@@ -86,18 +89,18 @@ class Load:
         # Detect if Id is changed i.e. fund is recreated to a new fund  
         diff = df.id.diff()
 
-        change = df.quote.pct_change()
+        change = df.nav.pct_change()
         fund_remakes = diff[diff != 0]
-        for index,_ in fund_remakes.iteritems():
-            updated_rows = df[index:].quote / (1 + change[index])
+        for index, _ in fund_remakes.iteritems():
+            updated_rows = df[index:].nav / (1 + change[index])
             df.update(updated_rows)
 
     def _adjust_fund_abnormal(self, df):
-        change = df.quote.pct_change()
+        change = df.nav.pct_change()
         # Detect if change in fund is more than 10% interday
         abnormal_change = change[abs(change) > 0.1]
         for date_index, percent_change in abnormal_change.iteritems():
-            updated_rows = df[date_index:].quote / (1 + percent_change)
+            updated_rows = df[date_index:].nav / (1 + percent_change)
             df.update(updated_rows)
 
     def _do_operations_on_dataset(self, df):
