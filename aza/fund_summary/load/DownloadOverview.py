@@ -25,6 +25,8 @@ class DownloadOverview:
         # convert columns to floating decimal
         df = convert_col_to_percent(df, "Fee")
         df = convert_col_to_percent(df, "ProdFee")
+        # drop all columns having empty column name i.e. not used
+        df = df.drop("", axis=1)
         return df
 
     def execute(self):

@@ -20,6 +20,8 @@ class DownloadCategory:
                       "Broker", "Size", "Start_date", "Owners", ""]
         # Name of fund is index
         df.set_index("Fund", inplace=True)
+        # drop all columns having empty column name i.e. not used
+        df = df.drop("", axis=1)
         return df
 
     def execute(self):
