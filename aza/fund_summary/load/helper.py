@@ -1,6 +1,13 @@
 from pandas import to_numeric
 
 
+def replace_all_slashes(df, column_name):
+    print(df.columns)
+    func = lambda str: str.replace("/", "_")
+    df[column_name] = df[column_name].map(func)
+    return df
+
+
 def convert_col_to_percent(df, column_name):
     if df[column_name].dtype == "O":  # Object column
         # The column may contain '-' and consists of strings

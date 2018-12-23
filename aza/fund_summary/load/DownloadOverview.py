@@ -2,7 +2,7 @@ from pandas import read_html
 
 from .NoDataException import NoDataException
 
-from .helper import convert_col_to_percent
+from .helper import convert_col_to_percent, replace_all_slashes
 
 
 class DownloadOverview:
@@ -20,13 +20,18 @@ class DownloadOverview:
         # Rename columns - aligned with columns in ppm
         df.columns = ["", "Fund", "Nav",
                       "", "Sharpe", "Fee", "ProdFee", "Rating", "", ""]
-        # Name of fund is index
-        df.set_index("Fund", inplace=True)
+        
         # convert columns to floating decimal
         df = convert_col_to_percent(df, "Fee")
         df = convert_col_to_percent(df, "ProdFee")
+        df = replace_all_slashes(df, "Fund")
+
         # drop all columns having empty column name i.e. not used
         df = df.drop("", axis=1)
+
+        # Finally set column 'Fund' as index
+        df.set_index("Fund", inplace=True)
+
         return df
 
     def execute(self):

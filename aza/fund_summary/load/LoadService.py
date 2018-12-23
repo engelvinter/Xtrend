@@ -63,8 +63,12 @@ class LoadService:
         df_overv = self._download_pages(self._download_overview)
         df_ids = self._download_pages(self._download_fund_ids)
 
+        # Concat all the different tables into one
         df = concat([df_hist, df_cat, df_overv, df_ids], axis="columns")
 
+        # Set time stamp
         df.name = datetime.now().strftime("%Y-%m-%d")
+        # Remove all not a number
+        df = df.dropna()
 
         return df

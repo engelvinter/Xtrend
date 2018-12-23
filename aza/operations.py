@@ -28,12 +28,23 @@ from common.functions import read_fund_groups
 
 import pandas as pd
 
+from .collect.Factory import Factory
+
 _orig_df = None
 _df = None
 
 _categories = None
 
+DB_PATH = r"C:\Temp\db2"
+
 GROUP_PATH = r"C:\Temp\Groups.ini"
+
+
+def collect():
+    f = Factory(DB_PATH)
+    fund_list = [(fund, _df.loc[fund].AzaId) for fund in _df.transpose()]
+    cs = f.create_collect_service(fund_list)
+    cs.execute()
 
 
 def load():
