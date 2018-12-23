@@ -1,5 +1,8 @@
 import os
 
+from .LastStored import LastStored
+
+from datetime import datetime
 
 class Store:
     """
@@ -14,6 +17,8 @@ class Store:
         """
         self._path = db_path
         self._funds = funds
+        self._last = LastStored(self._path)
+        self._now = datetime.now().date()
 
     def execute(self):
         """
@@ -30,3 +35,5 @@ class Store:
                     self._funds[fund].to_csv(f, header=header)
             except IOError as e:
                 print(e)
+
+        self._last.set_last_stored(self._now)
