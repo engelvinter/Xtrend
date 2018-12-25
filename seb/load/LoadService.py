@@ -27,22 +27,14 @@ class LoadService:
         self._path = db_path
         self._min_days = min_days
         self._max_missing_days = max_missing_days
-        self._date_file = os.path.join(db_path, "._last_updated.txt")
     
     def execute(self, fund_names):        
         load = Load(self._path, fund_names, self._min_days, self._max_missing_days)
         funds = load.execute()
 
-        date = self._get_last_updated(self._date_file)
+        last_date = max([funds[key].index[-1].date() for key in funds])
 
-        print("Loaded {0} funds. They were last updated '{1}'".
-              format(len(funds.keys()), date))
+        print("Loaded {0} funds. Last date: '{1}'".
+              format(len(funds.keys()), last_date))
 
-        return self.Result(date, funds)
-
-    def _get_last_updated(self, fullpath):
-        actual_date = None
-        with open(fullpath, "r") as f:
-            date_str = f.readline().rstrip()
-            actual_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        return actual_date
+        return self.Result(last_date, funds)

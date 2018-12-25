@@ -16,6 +16,8 @@ from common.Graph import Graph
 from common.functions import above_ma as above_ma_ts
 from common.functions import read_fund_groups
 
+from .collect.Factory import Factory
+
 import pandas as pd
 
 DB_PATH = r"C:\Temp\db"
@@ -34,7 +36,8 @@ def collect():
     Collects data from SEB of funds and stores into file db.
     The path of the file db is within this module (DB_PATH)
     """
-    cs = CollectService(DB_PATH, "1994-01-01")
+    f = Factory(DB_PATH)
+    cs = f.create_collector_service()
     cs.execute()
 
 
@@ -103,10 +106,10 @@ def set_date(date):
     ----------
     `date` : the actual date
     """
-    global _date, _df
+    global _date, _orig_df, _df
     _date = assign_date(date)
     ms = MakeStats(_date, 10)
-    _df = ms.execute(_funds)
+    _orig_df = _df = ms.execute(_funds)
 
 
 def reset():
