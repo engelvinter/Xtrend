@@ -24,7 +24,7 @@ class Download:
         :param resolution: string, one of day, month
         :return: a dictionary containing the parameters needed for avanza
         """
-        parameters = {"orderbookId": str(fund_id) ,
+        parameters = {"orderbookId": str(fund_id),
                       "chartType": "AREA",
                       "widthOfPlotContainer": 558,
                       "chartResolution": resolution,
@@ -50,7 +50,7 @@ class Download:
         req.add_header('Content-Type', 'application/json')
 
         js = json.dumps(params).encode("utf-8")
-        
+        #print(js)
         answer = urllib.request.urlopen(req, js)
         json_data = answer.read()
 
@@ -64,7 +64,7 @@ class Download:
         :return: the datapoints as an array containing tuples
                  the tuples consists of timestamp (seconds since 1970) and a NAV value
         """
-        params = self.create_aza_parameters(self._fund_id, "three_months")
+        params = self.create_aza_parameters(self._fund_id, "five_years")
         data = self.perform_json_post_request(self._url, params)
         points = data['dataPoints']
 
