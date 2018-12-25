@@ -158,9 +158,22 @@ def filter_above_ma(nbr_days):
     _filter_df(result)
 
 
+def best(nbr_funds=5):
+    """
+    This function chooces the top funds in three months perspective.
+
+    Parameters
+    ----------
+    `nbr_funds` : number of funds chosen
+    """
+    df_funds = _get_funds()
+    sorted_funds = df_funds.sort_values("Three_months", ascending=False)["Three_months"]
+    return sorted_funds[0:nbr_funds]
+
+
 def trend(column_name, nbr_funds=3):
     """
-    This functions choses the funds with the highest compound value
+    This functions chooses the funds with the highest compound value
     for each group. The compund value is calculated by an average
     of four other averages (12, 6, 3 ,1 month(s)).
 
@@ -178,9 +191,9 @@ def trend(column_name, nbr_funds=3):
 
     return funds
 
-
 def agg(nbr_funds):
     """
+    Aggresive Global - Meb Faber
     Picks the top trending funds using the compound
     value. The compound value is calculated by an average
     of four other averages (12, 6, 3 ,1 month(s)).
