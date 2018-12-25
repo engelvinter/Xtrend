@@ -57,14 +57,15 @@ class MakeStats:
                 last_open_date = sliced_series.index[-1].date()
                 
                 if not self._is_fund_still_open(last_open_date):
-                    print("Fund '{0}' is closed".format(fund))
+                    #print("Fund '{0}' is closed".format(fund))
                     continue
 
                 row = self._create_row(fund, sliced_series)
                 df.loc[fund] = row
 
             except IndexError as e:
-                print(fund, " has too short timeseries")
+                #print(fund, " has too short timeseries")
+                pass
         df.name = self._date.strftime("%Y-%m-%d")
         return df
     
