@@ -2,7 +2,6 @@ from pandas import to_numeric
 
 
 def replace_all_slashes(df, column_name):
-    print(df.columns)
     func = lambda str: str.replace("/", "_")
     df[column_name] = df[column_name].map(func)
     return df
