@@ -1,33 +1,22 @@
 
-from seb.collect.CollectService import CollectService
-
 from seb.load.LoadService import LoadService, fund_names
-
-from seb.load.MakeStats import MakeStats
 
 from datetime import datetime
 
-from re import match
-
-from common.assign_date import assign_date
-
 from common.Graph import Graph
 
-from common.functions import above_ma as above_ma_ts
 from common.functions import read_fund_groups
 
 from .collect.Factory import Factory
 
-import pandas as pd
+from .model.FundView import FundView
 
 DB_PATH = r"C:\Temp\db"
 
 GROUP_PATH = r"C:\Temp\Groups.ini"
 
 _funds = None
-_orig_df = None
-_df = None
-
+_view = None
 _date = datetime.now().date()
 
 
@@ -46,27 +35,21 @@ def load(nbr_funds=10000):
     This function loads the navs (net asset values) from file db of funds and then calcualtes
     statistics of each fund into a dataframe.
     """
-    global _funds, _orig_df, _df, _date
+    global _funds, _view, _date
     names = fund_names(DB_PATH)[:nbr_funds]
 
     service = LoadService(DB_PATH, 10, 10)
     result = service.execute(names)
     _funds = result.funds
-
-    ms = MakeStats(result.last_updated, 10)
-    _df = ms.execute(result.funds)
-
-    _orig_df = _df
+    _view = FundView(result)
 
 
 def apply_groups(full_path=GROUP_PATH):
     """
     Applies a group ini file to the statistics. 
     """
-    global _get_funds
     fund_to_group = read_fund_groups(full_path)
-    _set_groups(fund_to_group)
-    _get_funds = lambda: trend("Group", 1)  # noqa: E731
+    _view.set_groups(fund_to_group)
 
 
 def avail_funds_during_year(year, regexp=".*"):
@@ -84,17 +67,7 @@ def avail_funds_during_year(year, regexp=".*"):
     -------
     a list of fund names
     """
-    avail_funds = []
-    start_year = datetime(year, 1, 1)
-    end_year = datetime(year, 12, 31)
-    for fund, data in _funds.items():
-        if match(regexp, fund) is None:
-            continue
-        start_fund = data.index[0]
-        end_fund = data.index[-1]
-        if start_fund < start_year and end_fund > end_year:
-            avail_funds.append(fund)
-    return avail_funds
+    _view.available_funds(year, regexp)
 
 
 def set_date(date):
@@ -106,18 +79,13 @@ def set_date(date):
     ----------
     `date` : the actual date
     """
-    global _date, _orig_df, _df
-    _date = assign_date(date)
-    ms = MakeStats(_date, 10)
-    _orig_df = _df = ms.execute(_funds)
+    global _date
+    _view.set_date(date)
 
 
 def reset():
     """ Resets into no filters """
-    global _df, _date, _get_funds
-    _df = _orig_df
-    _date = datetime.now().date()
-    _get_funds = _all_funds
+    _view.reset()
 
 
 def filter_name(regexp):
@@ -133,11 +101,7 @@ def filter_name(regexp):
                e.g. "SEB.*|Swedbank.*" to match all funds
                of SEB and Swedbank
     """
-    def fund_match(x):
-        return match(regexp, x) is not None
-        
-    matches = _orig_df.apply(axis=1, func=lambda x: fund_match(x.name))
-    _filter_df(matches)
+    _view.filter_name(regexp)
 
 
 def filter_above_ma(nbr_days):
@@ -150,12 +114,7 @@ def filter_above_ma(nbr_days):
     `nbr_days` : number days to use in moving average
 
     """
-    def calc(name):
-        ts = _funds[name].nav[:_date]
-        return above_ma_ts(nbr_days, ts)
-
-    result = _df.index.map(calc).tolist()
-    _filter_df(result)
+    _view.filter_above_ma(nbr_days)
 
 
 def best(nbr_funds=5):
@@ -166,7 +125,7 @@ def best(nbr_funds=5):
     ----------
     `nbr_funds` : number of funds chosen
     """
-    df_funds = _get_funds()
+    df_funds = _view.snapshot()
     sorted_funds = df_funds.sort_values("Three_months", ascending=False)["Three_months"]
     return sorted_funds[0:nbr_funds]
 
@@ -181,15 +140,18 @@ def trend(column_name, nbr_funds=3):
     -------
     A panda dataframe containing the best fund of each group
     """
+    df_funds = _view.snapshot()
+
     trend = lambda x: x.nlargest(nbr_funds, "Compound")  # noqa: E731
 
-    group = _df.groupby(column_name)
+    group = df_funds.groupby(column_name)
     
     funds = group.apply(trend)[["Compound"]]
 
     funds.name = "Best groups {}".format(_df.name)
 
     return funds
+
 
 def agg(nbr_funds):
     """
@@ -207,10 +169,10 @@ def agg(nbr_funds):
     -------
     A panda series containing the trending funds
     """
-    df_funds = _get_funds()
+    df_funds = _view.snapshot()
     sorted_funds = df_funds.sort_values("Compound", ascending=False)["Compound"]
     picked_funds = sorted_funds.head(nbr_funds)
-    picked_funds.name = "Aggressive Global Growth {}".format(_df.name)
+    picked_funds.name = "Aggressive Global Growth {}".format(df_funds.name)
     return picked_funds
 
 
@@ -244,41 +206,3 @@ def value(fund_name):
         msg = "The date '{0}' does not exist in the timeseries".format(_date)
         raise Exception(msg)
     return ts.loc[_date].nav
-
-
-"""
-Private functions of module
-"""
-
-
-def _filter_df(filter_series):
-    """"Performs a filtering using the given True/False series."""
-    global _df
-    _df = _orig_df[filter_series]
-    _df.name = _orig_df.name
-
-
-def _set_groups(fund_to_group):
-    """
-    Connects funds with different groups
-
-    Parameters
-    ----------
-    `fund_to_group` : dictionary populated by fund name => group name 
-    """
-    global _df
-    s = pd.Series(fund_to_group)
-    _df["Group"] = s
-
-
-def _all_funds():
-    """
-    Returns
-        Returns all available funds
-        In case of
-            using groups the best fund of each group is returned
-    """
-    return _df
-
-
-_get_funds = _all_funds
