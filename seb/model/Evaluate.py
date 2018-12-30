@@ -56,6 +56,6 @@ class Evaluate:
         df_funds = self._view.snapshot()
         sorted_funds = df_funds.sort_values("Compound", ascending=False)["Compound"]
         picked_funds = sorted_funds.head(nbr_funds)
-        picked_funds.name = "Aggressive Global Growth {}".format(df_funds.name)
+        picked_funds.name = "Aggressive Global Growth {}".format("")
         return picked_funds
     

@@ -32,7 +32,7 @@ class FundView:
         for filter in self._transform_list:
             df = filter.execute(df)
 
-        return df
+        return df.dropna()
 
     def set_date(self, date):
         """
@@ -57,7 +57,7 @@ class FundView:
         self._transform_list.append(f)
 
     def reset(self):
-        self._filter_list = []
+        self._transform_list = []
 
     def available_funds(self, year, regexp=".*"):
         """
