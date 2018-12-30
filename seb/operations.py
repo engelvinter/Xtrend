@@ -11,12 +11,16 @@ from .collect.Factory import Factory
 
 from .model.FundView import FundView
 
+from .model.Evaluate import Evaluate
+
 DB_PATH = r"C:\Temp\db"
 
 GROUP_PATH = r"C:\Temp\Groups.ini"
 
 _funds = None
 _view = None
+_evaluate = None
+
 _date = datetime.now().date()
 
 
@@ -35,13 +39,14 @@ def load(nbr_funds=10000):
     This function loads the navs (net asset values) from file db of funds and then calcualtes
     statistics of each fund into a dataframe.
     """
-    global _funds, _view, _date
+    global _funds, _view, _evaluate
     names = fund_names(DB_PATH)[:nbr_funds]
 
     service = LoadService(DB_PATH, 10, 10)
     result = service.execute(names)
     _funds = result.funds
     _view = FundView(result)
+    _evaluate = Evaluate(_view)
 
 
 def apply_groups(full_path=GROUP_PATH):
@@ -125,9 +130,7 @@ def best(nbr_funds=5):
     ----------
     `nbr_funds` : number of funds chosen
     """
-    df_funds = _view.snapshot()
-    sorted_funds = df_funds.sort_values("Three_months", ascending=False)["Three_months"]
-    return sorted_funds[0:nbr_funds]
+    return _evaluate.best(nbr_funds)
 
 
 def trend(column_name, nbr_funds=3):
@@ -140,17 +143,7 @@ def trend(column_name, nbr_funds=3):
     -------
     A panda dataframe containing the best fund of each group
     """
-    df_funds = _view.snapshot()
-
-    trend = lambda x: x.nlargest(nbr_funds, "Compound")  # noqa: E731
-
-    group = df_funds.groupby(column_name)
-    
-    funds = group.apply(trend)[["Compound"]]
-
-    funds.name = "Best groups {}".format(_df.name)
-
-    return funds
+    return _evaluate.trend(column_name, nbr_funds)
 
 
 def agg(nbr_funds):
@@ -169,11 +162,7 @@ def agg(nbr_funds):
     -------
     A panda series containing the trending funds
     """
-    df_funds = _view.snapshot()
-    sorted_funds = df_funds.sort_values("Compound", ascending=False)["Compound"]
-    picked_funds = sorted_funds.head(nbr_funds)
-    picked_funds.name = "Aggressive Global Growth {}".format(df_funds.name)
-    return picked_funds
+    return _evaluate.agg(nbr_funds)
 
 
 def graph(fund_name):
@@ -201,8 +190,4 @@ def value(fund_name):
     The nav (net asset vaue) of the fund at the given date
     Use set_date to set the date
     """
-    ts = _funds[fund_name]
-    if _date not in ts.index:
-        msg = "The date '{0}' does not exist in the timeseries".format(_date)
-        raise Exception(msg)
-    return ts.loc[_date].nav
+    return _view.value(fund_name)

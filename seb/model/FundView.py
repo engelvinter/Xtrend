@@ -85,6 +85,24 @@ class FundView:
             if start_fund < start_year and end_fund > end_year:
                 avail_funds.append(fund)
         return avail_funds
-        
+
+    def value(self, fund_name):
+        """
+
+        Parameters
+        ----------
+        `fund_name` : the name of the fund
+
+        Returns
+        -------
+        The nav (net asset vaue) of the fund at the given date
+        Use set_date to set the date
+        """
+        ts = self._funds[fund_name]
+        if self._date not in ts.index:
+            msg = "The date '{0}' does not exist in the timeseries".format(self._date)
+            raise Exception(msg)
+
+        return ts.loc[self._date].nav
 
     
