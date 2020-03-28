@@ -1,9 +1,9 @@
 
-from .Download import Download
-from .Extract import Extract
+from seb.collect.Download import Download
+from seb.collect.Extract import Extract
+from seb.collect.Collect import Collect
+from seb.collect.CollectService import CollectService
 from common.Store import Store
-from .Collect import Collect
-from .CollectService import CollectService
 from common.LastStored import LastStored
 
 import datetime
@@ -30,7 +30,8 @@ class Factory:
     def create_collector_service(self):
         self._prepare_db()
         
-        default_date = datetime.datetime(1994, 1, 1).date()        
+        #1994-01-01
+        default_date = datetime.datetime(2020, 2, 1).date()        
         last_updated = self._last.get_last_stored(default_date)
         return CollectService(last_updated, self)
 

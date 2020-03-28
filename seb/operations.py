@@ -1,35 +1,61 @@
-
-from seb.load.LoadService import LoadService, fund_names
-
 from datetime import datetime
+
+import json
+
+from pathlib import Path
 
 from common.Graph import Graph
 
 from common.functions import read_fund_groups
 
-from .collect.Factory import Factory
+from seb.load.LoadService import LoadService, fund_names
 
-from .model.FundView import FundView
+from seb.collect.Factory import Factory
 
-from .model.Evaluate import Evaluate
+from seb.model.FundView import FundView
 
-DB_PATH = r"C:\Temp\db"
+from seb.model.Evaluate import Evaluate
 
-GROUP_PATH = r"C:\Temp\Groups.ini"
+FUND_DB_PATH = "fund_db_path"
+FUND_GROUP_FILE = "fund_group_file"
 
+_settings = {}
 _funds = None
 _view = None
 _evaluate = None
 
 _date = datetime.now().date()
 
+def save_settings(db_path, group_file):
+    """
+    Saves the settings: fund database path and path to the fund group file
+    The fund database path is where the timeseries for each fund is saved
+    The fund group file which contains the funds that will be used when applying a strategy
+    The settings file is called .seb.json and save in user's home directory
+    """
+    data = { FUND_DB_PATH : db_path, FUND_GROUP_FILE : group_file}
+    json_txt = json.dumps(data)
+    file_path = Path.home().joinpath(".seb.json")
+    print("Saving settings in {}".format(file_path))
+    file_path.write_text(json_txt)
+
+def load_settings():
+    """
+    Loads the settings: fund database path and path to the fund group file
+    Returns the settings as a dictionary
+    """
+    file_path = Path.home().joinpath(".seb.json")
+    print("Loading settings in {}".format(file_path))
+    json_txt = file_path.read_text()
+    json_data = json.loads(json_txt)
+    return json_data
 
 def collect():
     """
     Collects data from SEB of funds and stores into file db.
     The path of the file db is within this module (DB_PATH)
     """
-    f = Factory(DB_PATH)
+    f = Factory(_settings[FUND_DB_PATH])
     cs = f.create_collector_service()
     cs.execute()
 
@@ -40,20 +66,20 @@ def load(nbr_funds=10000):
     statistics of each fund into a dataframe.
     """
     global _funds, _view, _evaluate
-    names = fund_names(DB_PATH)[:nbr_funds]
+    names = fund_names(_settings[FUND_DB_PATH])[:nbr_funds]
 
-    service = LoadService(DB_PATH, 10, 10)
+    service = LoadService(_settings[FUND_DB_PATH], 10, 10)
     result = service.execute(names)
     _funds = result.funds
     _view = FundView(result)
     _evaluate = Evaluate(_view)
 
 
-def apply_groups(full_path=GROUP_PATH):
+def apply_groups():
     """
     Applies a group ini file to the statistics. 
     """
-    fund_to_group = read_fund_groups(full_path)
+    fund_to_group = read_fund_groups(_settings[FUND_GROUP_FILE])
     _view.set_groups(fund_to_group)
 
 
@@ -124,7 +150,7 @@ def filter_above_ma(nbr_days):
 
 def best(nbr_funds=5):
     """
-    This function chooces the top funds in three months perspective.
+    This function chooses the top funds in three months perspective.
 
     Parameters
     ----------
