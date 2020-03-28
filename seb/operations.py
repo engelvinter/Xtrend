@@ -42,13 +42,14 @@ def save_settings(db_path, group_file):
 def load_settings():
     """
     Loads the settings: fund database path and path to the fund group file
-    Returns the settings as a dictionary
+    Sets them in internal data structure
     """
+    global _settings
     file_path = Path.home().joinpath(".seb.json")
     print("Loading settings in {}".format(file_path))
     json_txt = file_path.read_text()
     json_data = json.loads(json_txt)
-    return json_data
+    _settings = json_data
 
 def collect():
     """
