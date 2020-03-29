@@ -56,7 +56,7 @@ class Load:
 
         for date in only_nulls:
             if start_date == date:
-                start_date += 1
+                start_date = start_date + start_date.freq
                 nbr_missing_days += 1
             else:
                 start_date = pd.Timestamp(date, freq="B")
