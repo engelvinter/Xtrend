@@ -28,7 +28,7 @@ def read_fund_groups(full_path):
     """
     config = ConfigParser(allow_no_value=True)
     config.optionxform = str
-    config.read(full_path)
+    config.read(full_path, encoding="iso-8859-1")
     fund_config = {}
     for section in config.sections():
         d = {item[0]: section for item in config.items(section)}
